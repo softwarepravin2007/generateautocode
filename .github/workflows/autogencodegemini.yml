@@ -1,0 +1,121 @@
+name: Trigger on JIRA Issue Create
+
+on:
+  repository_dispatch:
+    types: [gemini_auto_gen_code]
+
+jobs:
+  print-jira-details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print JIRA payload
+        run: |
+          echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Reporter: ${{ github.event.client_payload.reporter }}"
+
+  handle-jira:
+    runs-on: ubuntu-latest
+    needs: print-jira-details
+    steps:
+      - name: Print JIRA details again
+        run: |
+          echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Reporter: ${{ github.event.client_payload.reporter }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push branch
+        id: branch
+        run: |
+          BRANCH_NAME="${{ github.event.client_payload.issue_key }}"
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install google-generativeai
+
+      - name: Generate code with Google AI Studio
+        id: gencode
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          INPUT_ISSUE_KEY: ${{ github.event.client_payload.issue_key }}
+          INPUT_ISSUE_TITLE: ${{ github.event.client_payload.issue_title }}
+          INPUT_ISSUE_DESCRIPTION: ${{ github.event.client_payload.issue_description }}
+        run: |
+          python3 <<'EOF'
+          import os
+          import json
+          import google.generativeai as genai
+
+          genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+          model = genai.GenerativeModel("gemini-1.5-pro")
+
+          issue = {
+              "key": os.environ["INPUT_ISSUE_KEY"],
+              "title": os.environ["INPUT_ISSUE_TITLE"],
+              "description": os.environ["INPUT_ISSUE_DESCRIPTION"],
+          }
+
+          prompt = f"""
+          You are an automated code generator.
+
+          Based on the following JIRA issue, generate high-quality code.
+          Output ONLY file paths and contents in a deterministic format.
+
+          JIRA Issue:
+          {json.dumps(issue, indent=2)}
+          """
+
+          response = model.generate_content(prompt)
+
+          with open("autogen_output.txt", "w") as f:
+              f.write(response.text)
+
+          print("Code generation complete.")
+          EOF
+
+      - name: Apply generated code to repo
+        run: |
+          bash scripts/apply_autogen_files.sh autogen_output.txt
+
+      - name: Commit files
+        run: |
+          git config user.name "auto-bot"
+          git config user.email "bot@example.com"
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "${{ github.event.client_payload.issue_key }}: auto-generated code"
+          git push origin "${{ steps.branch.outputs.branch }}"
+
+      - name: Create Pull Request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: ${{ steps.branch.outputs.branch }}
+          destination_branch: main
+          pr_title: "${{ github.event.client_payload.issue_key }} – Auto-generated implementation"
+          pr_body: |
+            🤖 Auto-generated from JIRA issue
+
+            **Issue:** ${{ github.event.client_payload.issue_key }}
+            **Title:** ${{ github.event.client_payload.issue_title }}
+
+            **Description:**
+            ${{ github.event.client_payload.issue_description }}
