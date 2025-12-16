@@ -1,7 +1,8 @@
 name: Generate Spring Boot API (Branch)
 on:
   workflow_dispatch:
-    types: [ollama_auto_gen_code]
+    # 'types' is only for repository_dispatch; remove for workflow_dispatch
+     types: [ollama_auto_gen_code]
 
 jobs:
   generate:
@@ -22,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq maven
+          sudo apt-get install -y jq maven curl
 
       - name: Install Ollama
         run: curl -fsSL https://ollama.com/install.sh | sh
@@ -47,7 +48,8 @@ jobs:
 
       - name: Generate Spring Boot REST API
         run: |
-          PROMPT=$(cat <<'EOF' Generate a minimal, production-ready Spring Boot 3 REST API.
+          PROMPT=$(cat <<'EOF'
+Generate a minimal, production-ready Spring Boot 3 REST API.
 
 Requirements:
 - Java 17
@@ -59,7 +61,6 @@ Requirements:
 - Global exception handling
 - Include pom.xml
 - Include main Application class
-
 EOF
 )
           curl -s http://localhost:11434/api/generate \
@@ -90,12 +91,12 @@ EOF
           }' output.txt
 
       - name: Build project
-        run: mvn test
+        run: mvn clean test
 
       - name: Commit and push branch
         run: |
           git config user.name "ollama-bot"
           git config user.email "ollama-bot@users.noreply.github.com"
           git add .
-          git commit -m "AI: generate Spring Boot REST API" || echo "No changes"
+          git diff-index --quiet HEAD || git commit -m "AI: generate Spring Boot REST API"
           git push origin $BRANCH_NAME
