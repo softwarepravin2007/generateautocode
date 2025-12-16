@@ -63,6 +63,8 @@ Requirements:
 - Include main Application class
 EOF
 )
+          echo "$PROMPT"  # optional: check that prompt is correct
+
           curl -s http://localhost:11434/api/generate \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg prompt "$PROMPT" '{
