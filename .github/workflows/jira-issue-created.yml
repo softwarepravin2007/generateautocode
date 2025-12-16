@@ -12,9 +12,6 @@ jobs:
           echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
           echo "Summary: ${{ github.event.client_payload.summary }}"
           echo "Reporter: ${{ github.event.client_payload.reporter }}"
-  create-branch:
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
