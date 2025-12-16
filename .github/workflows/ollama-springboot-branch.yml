@@ -1,5 +1,4 @@
 name: Generate Spring Boot API (Branch)
-
 on:
   workflow_dispatch:
     types: [ollama_auto_gen_code]
