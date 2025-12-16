@@ -1,13 +1,21 @@
 name: Trigger on JIRA Issue Create
 on:
   repository_dispatch:
-    types: [jira_issue_created]
+    types: [auto_gen_code]
 
 jobs:
-  handle-jira:
+  print-jira-details:
     runs-on: ubuntu-latest
     steps:
       - name: Print JIRA payload
+        run: |
+          echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Reporter: ${{ github.event.client_payload.reporter }}"
+  handle-jira:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create New ${{ github.event.client_payload.issue_key }} branch
         run: |
           echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
           echo "Summary: ${{ github.event.client_payload.summary }}"
