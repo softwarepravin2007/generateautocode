@@ -60,11 +60,6 @@ Requirements:
 - Include pom.xml
 - Include main Application class
 
-Output format STRICTLY:
-
-<relative/file/path>
-```java or xml
-<file contents>
 EOF
 )
           curl -s http://localhost:11434/api/generate \
