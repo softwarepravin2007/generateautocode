@@ -2,6 +2,7 @@ name: Generate Spring Boot API (Branch)
 
 on:
   workflow_dispatch:
+    types: [ollama_auto_gen_code]
 
 jobs:
   generate:
@@ -29,6 +30,7 @@ jobs:
 
       - name: Start Ollama
         run: |
+          set -e
           ollama serve &
           for i in {1..10}; do
             curl -s http://localhost:11434/api/tags && break
@@ -67,41 +69,40 @@ Output format STRICTLY:
 <file contents>
 EOF
 )
-      curl -s http://localhost:11434/api/generate \
-        -H "Content-Type: application/json" \
-        -d "{
-          \"model\": \"qwen2.5-coder:7b\",
-          \"prompt\": \"$PROMPT\",
-          \"temperature\": 0.2,
-          \"num_predict\": 1500,
-          \"stream\": false
-        }" | jq -r '.response' > output.txt
+          curl -s http://localhost:11434/api/generate \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg prompt "$PROMPT" '{
+              model: "qwen2.5-coder:7b",
+              prompt: $prompt,
+              temperature: 0.2,
+              num_predict: 1500,
+              stream: false
+            }')" | jq -r '.response' > output.txt
 
-  - name: Write files
-    run: |
-      awk '
-      /^<.*>$/ {
-        gsub(/[<>]/,"",$0)
-        file=$0
-        next
-      }
-      /```/ { next }
-      {
-        if (file) {
-          dir=substr(file,1,match(file,"/[^/]*$")-1)
-          system("mkdir -p " dir)
-          print > file
-        }
-      }' output.txt
+      - name: Write files
+        run: |
+          awk '
+          /^<.*>$/ {
+            gsub(/[<>]/,"",$0)
+            file=$0
+            next
+          }
+          /```/ { next }
+          {
+            if (file) {
+              dir=substr(file,1,match(file,"/[^/]*$")-1)
+              if (length(dir) > 0) system("mkdir -p " dir)
+              print > file
+            }
+          }' output.txt
 
-  - name: Build project
-    run: mvn test
+      - name: Build project
+        run: mvn test
 
-  - name: Commit and push branch
-    run: |
-      git config user.name "ollama-bot"
-      git config user.email "ollama-bot@users.noreply.github.com"
-      git add .
-      git commit -m "AI: generate Spring Boot REST API" || echo "No changes"
-      git push origin $BRANCH_NAME
-
+      - name: Commit and push branch
+        run: |
+          git config user.name "ollama-bot"
+          git config user.email "ollama-bot@users.noreply.github.com"
+          git add .
+          git commit -m "AI: generate Spring Boot REST API" || echo "No changes"
+          git push origin $BRANCH_NAME
