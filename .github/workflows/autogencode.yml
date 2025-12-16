@@ -31,3 +31,86 @@ jobs:
         run: |
           git checkout -b "${{ github.event.client_payload.issue_key }}"
           git push origin "${{ github.event.client_payload.issue_key }}"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install openai
+
+      - name: Generate code with OpenAI
+        id: gencode
+        env:
+          OPENAI_API_KEY: "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"
+          INPUT_ISSUE_KEY: ${{ github.event.client_payload.issue_key }}
+          INPUT_ISSUE_TITLE: ${{ github.event.client_payload.issue_title }}
+          INPUT_ISSUE_DESCRIPTION: ${{ github.event.client_payload.issue_description }}
+        run: |
+          python3 <<'EOF'
+          import os, json
+          from openai import OpenAI
+
+          client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+          issue = {
+              "key": os.environ["INPUT_ISSUE_KEY"],
+              "title": os.environ["INPUT_ISSUE_TITLE"],
+              "description": os.environ["INPUT_ISSUE_DESCRIPTION"],
+          }
+
+          prompt = f"""
+          You are an automated code generator.
+
+          Based on the following JIRA issue, generate high-quality code.
+          Output ONLY file paths and contents in a deterministic format.
+
+          JIRA Issue:
+          {json.dumps(issue, indent=2)}
+          """
+
+          response = client.responses.create(
+              model="gpt-4.1",
+              input=prompt,
+          )
+
+          with open("autogen_output.txt", "w") as f:
+              f.write(response.output_text)
+
+          print("Code generation complete.")
+          EOF
+
+      - name: Apply generated code to repo
+        run: |
+          bash scripts/apply_autogen_files.sh autogen_output.txt
+
+      - name: Commit files
+        run: |
+          git config user.name "auto-bot"
+          git config user.email "bot@example.com"
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "${{ github.event.inputs.issue_key }}: auto-generated code"
+          git push origin "${{ steps.branch.outputs.branch }}"
+
+      - name: Create Pull Request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: ${{ steps.branch.outputs.branch }}
+          destination_branch: main
+          pr_title: "${{ github.event.inputs.issue_key }} – Auto-generated implementation"
+          pr_body: |
+            🤖 Auto-generated from JIRA issue
+
+            **Issue:** ${{ github.event.inputs.issue_key }}
+            **Title:** ${{ github.event.inputs.issue_title }}
+
+            **Description:**
+            ${{ github.event.inputs.issue_description }}
