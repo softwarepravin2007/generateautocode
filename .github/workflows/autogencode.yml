@@ -44,7 +44,7 @@ jobs:
       - name: Generate code with OpenAI
         id: gencode
         env:
-          OPENAI_API_KEY: "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"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           INPUT_ISSUE_KEY: ${{ github.event.client_payload.issue_key }}
           INPUT_ISSUE_TITLE: ${{ github.event.client_payload.issue_title }}
           INPUT_ISSUE_DESCRIPTION: ${{ github.event.client_payload.issue_description }}
