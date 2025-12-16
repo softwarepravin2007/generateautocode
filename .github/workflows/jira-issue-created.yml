@@ -1,9 +1,8 @@
 name: Trigger on JIRA Issue Create
-
-on:
+'on':
   repository_dispatch:
-    types: [jira_issue_created]
-
+    types:
+      - jira_issue_created
 jobs:
   handle-jira:
     runs-on: ubuntu-latest
@@ -15,13 +14,11 @@ jobs:
           echo "Reporter: ${{ github.event.client_payload.reporter }}"
   create-branch:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Create and push branch
         run: |
           git checkout -b ${{ github.event.client_payload.issue_key }}
