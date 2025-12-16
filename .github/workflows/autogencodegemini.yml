@@ -1,4 +1,4 @@
-name: Trigger on JIRA Issue Create
+name: Trigger on JIRA Issue Create Gemini
 
 on:
   repository_dispatch:
