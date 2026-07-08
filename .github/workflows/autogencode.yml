@@ -3,6 +3,14 @@ on:
   repository_dispatch:
     types: [auto_gen_code]
 jobs:
+  print-jira-details1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print JIRA payload
+        run: |
+          echo "Issue Key: ${{ github.event.client_payload.issue_key }}"
+          echo "Summary: ${{ github.event.client_payload.summary }}"
+          echo "Reporter: ${{ github.event.client_payload.reporter }}"
   print-jira-details:
     runs-on: ubuntu-latest
     steps:
