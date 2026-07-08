@@ -2,7 +2,6 @@ name: Trigger on JIRA Issue Create
 on:
   repository_dispatch:
     types: [auto_gen_code]
-
 jobs:
   print-jira-details:
     runs-on: ubuntu-latest
