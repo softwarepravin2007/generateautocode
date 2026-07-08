@@ -1,4 +1,5 @@
 name: Trigger on JIRA Issue Create
+
 trigger:
   repository_dispatch:
     types: [auto_gen_code]
