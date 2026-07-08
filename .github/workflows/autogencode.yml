@@ -1,5 +1,5 @@
 name: Trigger on JIRA Issue Create
-trigger:
+trigger1:
   repository_dispatch:
     types: [auto_gen_code]
 jobs:
