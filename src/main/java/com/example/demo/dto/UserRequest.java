@@ -18,7 +18,7 @@ public class UserRequest {
     @Min(value = 0, message = "age must be >= 0")
     private Integer age;
 
-    // Optional field
+    @NotBlank(message = "email is mandatory")
     private String phone;
 
     public String getName() { return name; }
