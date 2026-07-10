@@ -20,7 +20,13 @@ public class UserRequest {
 
     // Optional field
     private String phone;
+    
+    @NotBlank(message = "email is mandatory")
+    private String test;
 
+    public String getTest() { return test; }
+    public void setTest(String test) { this.test = test; }
+    
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
