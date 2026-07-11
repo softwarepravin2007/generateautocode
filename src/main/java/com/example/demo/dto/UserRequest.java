@@ -17,7 +17,12 @@ public class UserRequest {
     @NotNull(message = "age is mandatory")
     @Min(value = 0, message = "age must be >= 0")
     private Integer age;
+    
+    @NotBlank(message = "email is mandatory")
+    private String test1;
 
+    public String getTest1() { return test1; }
+    public void setTest1(String test1) { this.test1 = test1; }
     // Optional field
     private String phone;
 
