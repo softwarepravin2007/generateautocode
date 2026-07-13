@@ -18,6 +18,10 @@ public class UserRequest {
     @Min(value = 0, message = "age must be >= 0")
     private Integer age;
 
+    @NotBlank(message = "name is mandatory")
+    private String karan;
+     public String getKaran() { return karan; }
+    public void setKaran(String karan) { this.karan = karan; }   
     // Optional field
     private String phone;
 
